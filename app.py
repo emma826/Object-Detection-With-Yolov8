@@ -1,40 +1,55 @@
 import streamlit as st
-import numpy as np
 import torch
 from ultralytics import YOLO
 import cv2
 import tempfile
-import time
 import os
 
-st.title('Object Detection with YOLOv8')
-st.write('Upload a video to detect objects using a custom-trained YOLOv8 model.')
+st.title('🚗 Object Detection with YOLOv8')
+st.write('Upload a video to detect objects using your YOLOv8 model.')
 
-# Load the trained YOLOv8 model
-model_path = 'best.pt'  # Update this if needed
+# Load your trained model
+model_path = '/content/best.pt'  # Change if needed
 if not os.path.exists(model_path):
     st.error(f"Model file not found at {model_path}")
 else:
     model = YOLO(model_path)
 
-    uploaded_file = st.file_uploader("Choose a video file", type=["mp4", "avi", "mov", "mkv"])
+    uploaded_file = st.file_uploader("📁 Upload a video", type=["mp4", "avi", "mov", "mkv"])
 
     if uploaded_file is not None:
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".mp4") as tmp_file:
-            tmp_file.write(uploaded_file.getvalue())
-            video_path = tmp_file.name
+        # Save uploaded file to temp path
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".mp4") as tmp_input:
+            tmp_input.write(uploaded_file.getvalue())
+            input_video_path = tmp_input.name
 
-        st.video(video_path)  # Show the original video
+        st.video(input_video_path)  # Show original video
 
-        st.write("Processing video...")
+        st.write("🔄 Processing video, please wait...")
 
-        cap = cv2.VideoCapture(video_path)
+        # Prepare video reader/writer
+        cap = cv2.VideoCapture(input_video_path)
         if not cap.isOpened():
-            st.error("Error: Could not open video file.")
+            st.error("Failed to open video.")
         else:
-            stframe = st.empty()  # Placeholder for frames
-            skip_interval = 5     # Process every 5th frame
+            width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+            height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+            fps = int(cap.get(cv2.CAP_PROP_FPS))
+            total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+
+            skip_interval = 5
             frame_count = 0
+            processed_frames = 0
+
+            # Output video file
+            tmp_output = tempfile.NamedTemporaryFile(delete=False, suffix=".mp4")
+            output_video_path = tmp_output.name
+
+            fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+            out = cv2.VideoWriter(output_video_path, fourcc, fps, (width, height))
+
+            progress = st.progress(0)
+            status = st.empty()
 
             while cap.isOpened():
                 ret, frame = cap.read()
@@ -45,16 +60,26 @@ else:
                 if frame_count % skip_interval != 0:
                     continue
 
-                # Inference
                 results = model(frame)
-                annotated_frame = results[0].plot()
-                annotated_rgb = cv2.cvtColor(annotated_frame, cv2.COLOR_BGR2RGB)
+                annotated = results[0].plot()
+                out.write(annotated)
 
-                # Display annotated frame
-                stframe.image(annotated_rgb, channels="RGB", use_column_width=True)
-
-                time.sleep(0.05)  # Delay to allow rendering (adjust if needed)
+                processed_frames += 1
+                status.write(f"✅ Processed {frame_count} / {total_frames} frames")
+                progress.progress(min(frame_count / total_frames, 1.0))
 
             cap.release()
-            os.unlink(video_path)
-            st.success("Finished processing video.")
+            out.release()
+            os.unlink(input_video_path)
+
+            st.success("🎉 Video processing complete!")
+            st.video(output_video_path)
+
+            # Download button
+            with open(output_video_path, "rb") as f:
+                st.download_button(
+                    label="📥 Download Result Video",
+                    data=f,
+                    file_name="detected_output.mp4",
+                    mime="video/mp4"
+                )
