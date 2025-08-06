@@ -4,46 +4,45 @@ from ultralytics import YOLO
 import cv2
 import tempfile
 import os
+from io import BytesIO
 
-st.title('Object Detection with YOLOv8')
-st.write('Upload a video to detect objects using your YOLOv8 model.')
+st.title('🎯 Object Detection with YOLOv8')
+st.write('Upload a video and detect objects using your trained YOLOv8 model.')
 
-# Load your trained model
-model_path = 'best.pt'  # Change if needed
+model_path = 'best.pt'  # ✅ Replace with your correct model path
+
 if not os.path.exists(model_path):
-    st.error(f"Model file not found at {model_path}")
+    st.error(f"Model not found at {model_path}")
 else:
     model = YOLO(model_path)
 
     uploaded_file = st.file_uploader("📁 Upload a video", type=["mp4", "avi", "mov", "mkv"])
 
-    if uploaded_file is not None:
-        # Save uploaded file to temp path
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".mp4") as tmp_input:
-            tmp_input.write(uploaded_file.getvalue())
-            input_video_path = tmp_input.name
+    if uploaded_file:
+        # Save uploaded file
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".mp4") as tmp_in:
+            tmp_in.write(uploaded_file.getvalue())
+            input_video_path = tmp_in.name
 
-        st.video(input_video_path)  # Show original video
+        st.video(input_video_path)  # Show input video
 
-        st.write("🔄 Processing video, please wait...")
+        st.write("🚀 Processing video...")
 
-        # Prepare video reader/writer
         cap = cv2.VideoCapture(input_video_path)
         if not cap.isOpened():
-            st.error("Failed to open video.")
+            st.error("❌ Could not open video file.")
         else:
             width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
             height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-            fps = int(cap.get(cv2.CAP_PROP_FPS))
+            fps = cap.get(cv2.CAP_PROP_FPS)
             total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
-            skip_interval = 5
+            skip_interval = 10
             frame_count = 0
-            processed_frames = 0
 
-            # Output video file
-            tmp_output = tempfile.NamedTemporaryFile(delete=False, suffix=".mp4")
-            output_video_path = tmp_output.name
+            # Output path
+            tmp_out = tempfile.NamedTemporaryFile(delete=False, suffix=".mp4")
+            output_video_path = tmp_out.name
 
             fourcc = cv2.VideoWriter_fourcc(*'mp4v')
             out = cv2.VideoWriter(output_video_path, fourcc, fps, (width, height))
@@ -51,11 +50,10 @@ else:
             progress = st.progress(0)
             status = st.empty()
 
-            while cap.isOpened():
+            while True:
                 ret, frame = cap.read()
                 if not ret:
                     break
-
                 frame_count += 1
                 if frame_count % skip_interval != 0:
                     continue
@@ -64,22 +62,23 @@ else:
                 annotated = results[0].plot()
                 out.write(annotated)
 
-                processed_frames += 1
-                status.write(f"✅ Processed {frame_count} / {total_frames} frames")
                 progress.progress(min(frame_count / total_frames, 1.0))
+                status.text(f"Processing frame {frame_count}/{int(total_frames)}...")
 
             cap.release()
             out.release()
             os.unlink(input_video_path)
 
-            st.success("🎉 Video processing complete!")
-            st.video(output_video_path)
+            st.success("✅ Processing complete!")
 
-            # Download button
+            # Make sure file is fully written before loading
             with open(output_video_path, "rb") as f:
-                st.download_button(
-                    label="📥 Download Result Video",
-                    data=f,
-                    file_name="detected_output.mp4",
-                    mime="video/mp4"
-                )
+                video_bytes = f.read()
+
+            st.video(video_bytes)  # ✅ Stream the annotated video
+            st.download_button(
+                "📥 Download processed video",
+                video_bytes,
+                file_name="annotated_video.mp4",
+                mime="video/mp4"
+            )
