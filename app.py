@@ -15,7 +15,7 @@ if uploaded_file is not None:
     st.write("Running object detection...")
 
     # Load the custom trained model
-    model = YOLO('/content/runs/detect/yolov8n_custom_model_trained/weights/best.pt') # Make sure to use the correct path to your trained model weights
+    model = YOLO('best.pt') # Make sure to use the correct path to your trained model weights
 
     # Run inference on the video
     results = model(video_path, stream=True)
