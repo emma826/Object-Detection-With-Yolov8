@@ -19,7 +19,7 @@ FRAME_SKIP_INTERVAL = 5 # You can adjust this value
 
 # Load the trained YOLOv8 model
 # Ensure the model path is correct based on where you saved it
-model_path = '/best.pt'  # Update this path if needed
+model_path = 'best.pt'  # Update this path if needed
 if not os.path.exists(model_path):
     st.error(f"Model file not found at {model_path}. Please ensure the model is downloaded to this location.")
 else:
