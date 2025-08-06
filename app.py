@@ -6,7 +6,7 @@ from ultralytics import YOLO
 
 st.title("🎥 YOLOv8 Object Detection Video Processor")
 
-model_path = '/content/best.pt'
+model_path = 'best.pt'
 if not os.path.exists(model_path):
     st.error("Model file not found.")
 else:
