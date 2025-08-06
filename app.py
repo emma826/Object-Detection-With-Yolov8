@@ -5,11 +5,11 @@ import cv2
 import tempfile
 import os
 
-st.title('🚗 Object Detection with YOLOv8')
+st.title('Object Detection with YOLOv8')
 st.write('Upload a video to detect objects using your YOLOv8 model.')
 
 # Load your trained model
-model_path = '/content/best.pt'  # Change if needed
+model_path = 'best.pt'  # Change if needed
 if not os.path.exists(model_path):
     st.error(f"Model file not found at {model_path}")
 else:
