@@ -1,60 +1,30 @@
 import streamlit as st
-import cv2
-import torch
-import numpy as np
-from ultralytics import YOLO
-from PIL import Image
+import tempfile
 
-st.title("Object Detection on Video using YOLOv8 By Amoke Emmanuel")
-st.write("Upload a video file to perform object detection.")
+st.title("Object Detection in Video By Amoke Emmanuel")
 
-@st.cache_resource
-def load_model(model_path):
-    model = YOLO(model_path)
+uploaded_file = st.file_uploader("Upload a video file", type=["mp4", "avi", "mov"])
 
-    return model
+if uploaded_file is not None:
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".mp4") as tmp_file:
+        tmp_file.write(uploaded_file.read())
+        video_path = tmp_file.name
 
-model_path = '/content/runs/detect/yolov8n_custom_model_trained/weights/best.pt'
+    st.video(video_path)
 
-try:
-    model = load_model(model_path)
-    st.success("Model loaded successfully!")
-except Exception as e:
-    st.error(f"Error loading model: {e}")
-    st.stop()
+    st.write("Running object detection...")
 
+    # Load the custom trained model
+    model = YOLO('/content/runs/detect/yolov8n_custom_model_trained/weights/best.pt') # Make sure to use the correct path to your trained model weights
 
-video_file = st.file_uploader("Upload a video file", type=['mp4', 'avi', 'mov', 'mkv'])
+    # Run inference on the video
+    results = model(video_path, stream=True)
 
-if video_file is not None:
-    with open("temp_video.mp4", "wb") as f:
-        f.write(video_file.getbuffer())
+    
+    st.write("Detection results:")
+    for r in results:
+        im_array = r.plot()  # plot a BGR numpy array of predictions
+        im_array = im_array[..., ::-1]  # convert BGR to RGB
+        st.image(im_array, caption="Detected Objects", use_column_width=True)
 
-    st.subheader("Processing Video...")
-    video_capture = cv2.VideoCapture("temp_video.mp4")
-    frame_count = int(video_capture.get(cv2.CAP_PROP_FRAME_COUNT))
-    st.write(f"Total frames: {frame_count}")
-
-    video_placeholder = st.empty()
-
-    for frame_idx in range(frame_count):
-        ret, frame = video_capture.read()
-        if not ret:
-            break
-
-        results = model(frame)
-
-        for r in results:
-            im_array = r.plot()
-            frame_with_detections = Image.fromarray(im_array[..., ::-1])
-
-        video_placeholder.image(frame_with_detections, channels="RGB", use_column_width=True)
-
-    video_capture.release()
-    st.success("Video processing complete.")
-
-    import os
-    os.remove("temp_video.mp4")
-
-else:
-    st.info("Please upload a video file to start detection.")
+    os.unlink(video_path) # Clean up the temporary file
