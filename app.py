@@ -4,7 +4,8 @@ import tempfile
 import os
 from ultralytics import YOLO
 
-st.title("🎥 YOLOv8 Object Detection Video Processor")
+st.title("🎥 YOLOv8 Object Detection By Amoke Emmmanuel")
+st.write('Upload a video to detect objects using a custom-trained YOLOv8 model.')
 
 model_path = 'best.pt'
 if not os.path.exists(model_path):
@@ -35,7 +36,7 @@ else:
 
             progress = st.progress(0)
             count = 0
-            skip = 100
+            skip = 2
 
             while True:
                 ret, frame = cap.read()
