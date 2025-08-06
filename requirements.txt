@@ -3,6 +3,6 @@ numpy
 pandas
 torch
 ultralytics
-opencv-python # cv2 is part of opencv-python
+opencv-contrib-python-headless # Use headless version for server environments
 Pillow # PIL is part of Pillow
 ngrok # Used to expose the streamlit app
