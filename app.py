@@ -36,7 +36,7 @@ else:
 
             progress = st.progress(0)
             count = 0
-            skip = 2
+            skip = 5
 
             while True:
                 ret, frame = cap.read()
