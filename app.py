@@ -13,7 +13,7 @@ st.write('Upload a video to detect objects using a custom-trained YOLOv8 model.'
 
 # Load the trained YOLOv8 model
 # Ensure the model path is correct based on where you saved it
-model_path = '/content/best.pt'  # Update this path if needed
+model_path = 'best.pt'  # Update this path if needed
 if not os.path.exists(model_path):
     st.error(f"Model file not found at {model_path}. Please ensure the model is downloaded to this location.")
 else:
