@@ -34,9 +34,10 @@ else:
             fourcc = cv2.VideoWriter_fourcc(*'VP80')
             out = cv2.VideoWriter(out_path, fourcc, fps, (width, height))
 
+            st.write('')
             progress = st.progress(0)
             count = 0
-            skip = 5
+            skip = 15
 
             while True:
                 ret, frame = cap.read()
